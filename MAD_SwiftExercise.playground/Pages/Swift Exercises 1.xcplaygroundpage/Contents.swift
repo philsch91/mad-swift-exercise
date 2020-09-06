@@ -143,7 +143,7 @@ print(arrayConst3)
 
 // 5
 // The second element in the first array constant will stay the same
-// because the String type in Swift a value type
+// because the String type in Swift is a value type
 // In general, if a new String value is created, that String value is copied when it’s passed to a function or method, or when it’s assigned to a constant or variable
 // https://docs.swift.org/swift-book/LanguageGuide/StringsAndCharacters.html
 arrayVar[0].append(contentsOf: "x")
@@ -156,8 +156,10 @@ print(integerArrayConst)
 //: Dictionaries
 //: 1. Create a mutable empty Dictionary of type `[String: Double]`
 //: 1. Set the value for the key `"Answer to Life, the Universe and Everything"` to `42`.
+// 1
 var dict: [String: Double] = [:]
 print(dict)
+// 2
 dict["Answer to Life, the Universe and Everything"] = 42
 print(dict)
 // or
@@ -169,7 +171,22 @@ print(dict)
 //: 1. What happens if you force-unwrap an optional variable that contains `nil`?
 //: 1. Create another optional `String` variable and asign the value `nil`. Use the nil coalescing operator (`??`) to print the first unwrapped String from above.
 //: 1. Do the same thing again, but this time use the ternary conditional operator `(a ? b : c)`.
-
+// 1
+var optStr: String? = "Text"
+// 2
+if let str = optStr {
+    print(str)  // prints "Text"
+}
+// 3
+// A runtime error could occur
+var optStr2: String? = nil
+//print(optStr2!) // throws an error at runtime
+print(optStr2)   // prints nil
+// 4
+var optStr3: String? = nil
+print(optStr3 ?? optStr!)   // prints "Text"
+// 5
+print(optStr3 != nil ? optStr3 : optStr!)   // prints "Text"
 //: Optional chaining
 //: 1. Consider the following `struct`. Use optional chaining to change the value of `anOptionalInt` in `instance` to a new value of your choice in a single line of code. What would happen if we executed that line while `instance` is `nil`?
 //: 1. Use the `if let` conditional and optional chaining to print the value of `anOptionalInt` in `instance`. What would happen if `instance` or `anOptionalInt` were `nil`?
@@ -184,13 +201,50 @@ struct MyStruct {
 }
 
 var instance: MyStruct? = MyStruct()
-
+// 1
+// If instance would be nil, nothing would happen or could be changed
+instance?.anOptionalInt? = 20
+// 2
+// If instance would be nil, nothing would happen
+if let inst = instance {
+    if let instVar = inst.anOptionalInt {
+        print(instVar)
+    }
+}
+// If instance would be nil, nothing would happen
+print(instance?.anOptionalInt)
+// 3
+// If instance would be nil, no error is thrown, but the method cannot be called either
+instance = nil
+instance?.sayHelloWorld()
 //: ### Control flow
 //: 1. Write a `for-in` loop that sums up all the values in `myNumbers`.
 //: 1. Create an empty mutable `[Int: Int]` dictionary. Use a `for-in` loop to iterate over the elements in `myNumbers` and add each value to the dictionary, using the index of each element in `myNumbers` as its key. So for example, the dictionary should contain the key/value pair `0:12`, because 12 is element 0 of `myNumbers`.
 
 let myNumbers = [12, 23, 1, 104]
+// 1
+var sum = 0
+for num in myNumbers {
+    sum += num
+}
+print(sum)
+// 2
+var numDict: [Int: Int] = [:]
+for index in myNumbers.indices {
+    print("index: \(index)")
+    numDict[index] = myNumbers[index]
+    //numDict.updateValue(myNumbers[index], forKey: index)
+}
 
+print(numDict)
+// or
+var numDict2: [Int: Int] = [:]
+for (key, val) in myNumbers.enumerated() {
+    print("key: \(key) val: \(val)")
+    //numDict2[key] = val
+    numDict2.updateValue(val, forKey: key)
+}
+print(numDict2)
 //: ### Functions and Closures
 //: Functions
 //: 1. Declare and call a function without any parameters or return type that prints Hello World.
@@ -199,12 +253,72 @@ let myNumbers = [12, 23, 1, 104]
 //: 1. Declare and call a function with the same signature (two strings as parameters and returns a string), but this time make the first argument label **different** from the parameter name (=use a custom argument label).
 //: 1. Declare a function with a default parameter value. Call the function twice, once with the argument present, once without.
 //: 1. Declare a function with name `callAFunction` that takes another function as parameter and then executes it. Call your newly declared `callAFunction` and pass in one of the functions you previously declared.
+// 1
+func printFunction() {
+    print("Hello World")
+}
 
+printFunction()
+
+// 2
+func appendStrings(args: String, args2: String) -> String {
+    var str = args
+    str.append(args2)
+    return str
+}
+
+let appendedStr = appendStrings(args: "One", args2: "+Two")
+print(appendedStr)
+
+// 3
+func appendStrings2(_ args: String, args2: String) -> String {
+    var str = args
+    str.append(args2)
+    return str
+}
+let appendedStr2 = appendStrings2("Three", args2: "+Four")
+print(appendedStr2)
+// 4
+func appendStrings3(args1 args: String, args2: String) -> String {
+    var str = args
+    str.append(args2)
+    return str
+}
+let appendedStr3 = appendStrings3(args1: "Five", args2: "+Six")
+print(appendedStr3)
+// 5
+func printString(_ args: String = "Hi") {
+    print(args)
+}
+
+printString("Ciao")
+printString()
+// 6
+func callAFunction(_ args: String, args2: String, function: (String, String) -> String) {
+    let str = function(args, args2)
+    print(str)
+}
+
+callAFunction("Seven", args2: "+Eight", function: appendStrings(args:args2:))
 //: Closures
 //: 1. Create an optional variable that holds a closure (with a `String` parameter and no return type) and assign `nil`.
 //: 1. Call the closure using optional chaining. What will happen?
 //: 1. Create a `typealias` for this type of closure.
+// 1
+var optClosure: ((String) -> Void)? = nil
+// 2
+// optClosure is nil and therefore not invoked
+optClosure?("Hello")
+// 3
+typealias CompletionHandler = ((String) -> Void)?
 
+func invokeCompletionHandler(_ completionHandler: CompletionHandler) -> Void {
+    if let handler = completionHandler {
+        handler("invoked by invokeCompletionHandler")
+    }
+}
+
+invokeCompletionHandler(printString(_:))
 //: 1. Take a look at the following function, which takes a closure as parameter and calls it. This function is then called. For each of the following exercises, call the function again, but each time use one more simplification:
 //:   * Omit closure parameter types.
 //:   * Omit the closure return type
@@ -219,7 +333,26 @@ callAClosure(closure: { (item1: String, item2: String) -> String in
     return "\(item1) \(item2)"
 })
 
-
+// 1
+callAClosure(closure: { (item1, item2) -> String in
+    return "\(item1) \(item2)"
+})
+// 2
+callAClosure(closure: { (item1, item2) in
+    return "\(item1) \(item2)"
+})
+// 3
+callAClosure(closure : { item1, item2 in
+    return "\(item1) \(item2)"
+})
+// 4
+callAClosure(closure: {
+    return "\($0) \($1)"
+})
+// 5
+callAClosure(closure: {
+    "\($0) \($1)"
+})
 //: ### Classes
 //: 1. Create a new class named `Person`. Add non-optional `firstName` and `lastName` properties and an initializer.
 //: 1. Add a `name` computed property that returns a `String` containing the first and last name.
