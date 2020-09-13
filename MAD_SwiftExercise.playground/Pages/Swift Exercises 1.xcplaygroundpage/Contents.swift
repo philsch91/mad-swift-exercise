@@ -342,17 +342,26 @@ callAClosure(closure: { (item1, item2) in
     return "\(item1) \(item2)"
 })
 // 3
-callAClosure(closure : { item1, item2 in
+callAClosure(closure: { item1, item2 in
     return "\(item1) \(item2)"
 })
+callAClosure { item1, item2 in
+    return "\(item1) \(item2)"
+}
 // 4
 callAClosure(closure: {
     return "\($0) \($1)"
 })
+callAClosure {
+    return "\($0) \($1)"
+}
 // 5
 callAClosure(closure: {
     "\($0) \($1)"
 })
+callAClosure {
+    "\($0) \($1)"
+}
 //: ### Classes
 //: 1. Create a new class named `Person`. Add non-optional `firstName` and `lastName` properties and an initializer.
 //: 1. Add a `name` computed property that returns a `String` containing the first and last name.
@@ -360,6 +369,92 @@ callAClosure(closure: {
 //: 1. Create a subclass of `Person` and name it `Student`.
 //: 1. Add a `Float?` optional property called `grade`. Use the `didSet` property observer to make sure that the grade is not lower than 1.0 and not higher than 5.0 after it was set. Clamp the new value to this interval - so if a value higher than 5.0 is set, set it to 5.0 afterwards. If a value lower than 1.0 is set, set it to 1.0 afterwards.
 //: 1. Override the `greet` function from the superclass. If the `grade` property is set, it should now return `"Hi, I'm \(name). My grade is: \(grade)"`. If the `grade property isn't set, return the superclass's implementation.
+// In its simplest form, a stored property is a constant or variable that is stored as part of an instance of a particular class or structure.
+// https://docs.swift.org/swift-book/LanguageGuide/Properties.html
+
+class Person {
+    var firstName: String
+    var lastName: String
+    
+    var name: String {
+        return "\(firstName) \(lastName)"
+    }
+    
+    init(firstName: String, lastName: String) {
+        self.firstName = firstName
+        self.lastName = lastName
+    }
+    
+    public func greet() -> String {
+        return "Hi, I'm \(name)."
+    }
+}
+
+class Student : Person {
+    var grade: Float? {
+        didSet(oldGrade) {
+            // didSet is also called when property is set to nil
+            guard let grd = self.grade else {
+                return
+            }
+            if grd > Float(5.0) {
+                self.grade = 5.0
+            } else if grd < Float(1.0) {
+                self.grade = 1.0
+            }
+        }
+    }
+    
+    public override func greet() -> String {
+        guard let grd = self.grade else {
+            return super.greet()
+        }
+        
+        var greeting = super.greet()
+        greeting = "\(greeting) My grade is: \(grd)"
+        return greeting
+    }
+}
+
+// Test Person class
+let person = Person(firstName: "Philipp", lastName: "Schunker")
+print(person.firstName)
+print(person.lastName)
+print(person.name)
+print(person.greet())
+
+//Test Student class
+let student = Student(firstName: "Philipp (Student)", lastName: "Schunker (Student)")
+print(student.firstName)
+print(student.lastName)
+print(student.name)
+print(student.greet())
+
+student.grade = 0.5
+
+if let studentGrade = student.grade {
+    print(String(studentGrade))
+} else {
+    print("student.grade not set")
+}
+
+student.grade = 5.5
+
+if let studentGrade = student.grade {
+    print(String(studentGrade))
+} else {
+    print("student.grade not set")
+}
+
+student.grade = 1.15
+
+if let studentGrade = student.grade {
+    print(String(studentGrade))
+} else {
+    print("student.grade not set")
+}
+
+print(student.greet())
 
 //: ### Enums and Structs
 //: 1. Create an enum named `PetType` with cases `dog` and `cat`
@@ -372,6 +467,68 @@ callAClosure(closure: {
 //: 1. Create 3 or more instances of your `Student` class from above and store them in `let` constants. Then create a new array that contains all your students and store it in a variable.
 //: 1. Change one of the names of the students in your array. Does this change the name of any of the students stored in the `let` constants? Explain why/why not.
 //: 1. Can you change the name of one of the students stored in the `let` constants? Explain why/why not.
+// 1, 2
+enum PetType {
+    case dog, cat
+    
+    var animalSound: String {
+        switch self {
+        case .dog:
+            return "woof"
+        default:
+            return "meow"
+        }
+    }
+}
+// 3, 4
+struct Pet {
+    var name: String
+    let type: PetType
+    
+    init(name: String, type: PetType) {
+        self.name = name
+        self.type = type
+    }
+    
+    public func makeNoise() -> String {
+        return self.type.animalSound
+    }
+}
+// 5
+let pet1 = Pet(name: "Garfield", type: PetType.cat)
+let pet2 = Pet(name: "Slinky", type: PetType.dog)
+let pet3 = Pet(name: "Copper", type: PetType.dog)
+print(pet1.makeNoise())
+print(pet2.makeNoise())
+print(pet3.makeNoise())
+var pets = [pet1, pet2, pet3]
+// 6
+pets[1].name = "Skippy"
+// No. In general, if a new value type is created, that value type is copied when it’s passed to a function or method, or when it’s assigned to a constant or variable. Structs and Collections are value types.
+print(pet2.name)
+print(pets[1].name)
+// 7
+// No. Structs are value types and when assigned to a constant, all contained instance vars or properties are immutable
+//pet2.name = "Lessie" // change 'let' to 'var' to make it mutable
+//print(pet2.name)
+// 8
+let student1 = Student(firstName: "Student1FirstName", lastName: "Student1LastName")
+let student2 = Student(firstName: "Student2FirstName", lastName: "Student2LastName")
+let student3 = Student(firstName: "Student3FirstName", lastName: "Student3LastName")
+var students = [student1, student2, student3]
+// 9
+// Yes. Instances of a Class are reference types, so the reference outside and inside of the array (collection) point to the same instance.
+print(students[0].greet())
+students[0].firstName = "Student1NewFirstName"
+students[0].lastName = "Student1NewLastName"
+print(student1.greet())
+print(students[0].greet())
+// 10
+// Yes. The reference to the object assigned to a let constant is not changed. The instance vars firstName and lastName can be changed.
+print(student2.greet())
+student2.firstName = "Student2NewFirstName"
+student2.lastName = "Student2NewLastName"
+print(student2.greet())
 
 //: ### Protocols and extensions
 //: 1. Create a protocol called `NamedThing`. Add a `get` variable of type `String`, with the name `name`.
@@ -380,3 +537,34 @@ callAClosure(closure: {
 //: 1. Iterate over the objects in the array and print out their names.
 //: 1. Create a protocol extension for `NamedThing` that contains a new computed property of type `String` called `initial`. Add a default implementation in your protocol extension, which returns the first character of the `name` property, or, if `name` is empty, an empty string.
 //: 1. Print the new `initials` property in the loop you created above.
+// 1
+protocol NamedThing {
+    var name: String { get }
+}
+// 2
+extension Person: NamedThing {
+    
+}
+
+extension Pet: NamedThing {
+    
+}
+// 3
+let namedThings: [NamedThing] = [person, pet1, pet2, pet3]
+// 4
+for namedThing in namedThings {
+    print(namedThing.name)
+}
+// 5
+extension NamedThing {
+    var initial: String {
+        if let firstChar = name.first {
+            return String(firstChar)
+        }
+        return ""
+    }
+}
+// 6
+for namedThing in namedThings {
+    print(namedThing.initial)
+}
